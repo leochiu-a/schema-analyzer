@@ -72,10 +72,11 @@ export async function GET(request: Request) {
 
     if (!response.ok) {
       console.error("[analyze] target responded with error", { status: response.status, url: url.toString() });
-      return NextResponse.json(
-        { success: false, error: `網站回應失敗，狀態碼: ${response.status}` },
-        { status: 502 }
-      );
+      const errorMessage =
+        response.status === 403
+          ? "目標網站拒絕程式存取（403），請改用瀏覽器直接查看"
+          : `網站回應失敗，狀態碼: ${response.status}`;
+      return NextResponse.json({ success: false, error: errorMessage }, { status: 502 });
     }
 
     const html = await response.text();
