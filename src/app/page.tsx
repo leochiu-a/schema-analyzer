@@ -1,6 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import AnalysisResult, { type AnalysisData } from "@/components/AnalysisResult";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -87,7 +92,6 @@ export default function Home() {
     }
   }
 
-  // scroll active item into view
   useEffect(() => {
     if (activeIndex >= 0 && listRef.current) {
       const item = listRef.current.children[activeIndex] as HTMLElement;
@@ -123,23 +127,21 @@ export default function Home() {
   const isOpen = showSuggestions && suggestions.length > 0;
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen">
       <div className="mx-auto max-w-2xl px-4 py-12">
-        {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Schema 流行度分析器
           </h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-muted-foreground">
             輸入任意網址，即時分析頁面 JSON-LD 結構化標記並對照 Web Data Commons 2026-05 資料集
           </p>
         </div>
 
-        {/* Input form */}
         <form onSubmit={handleAnalyze} className="mb-6">
-          <div className="relative flex gap-2">
+          <div className="flex gap-2">
             <div className="relative flex-1">
-              <input
+              <Input
                 ref={inputRef}
                 type="url"
                 value={url}
@@ -153,13 +155,12 @@ export default function Home() {
                 aria-autocomplete="list"
                 aria-expanded={isOpen}
                 aria-haspopup="listbox"
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
               />
               {isOpen && (
                 <ul
                   ref={listRef}
                   role="listbox"
-                  className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                  className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-background py-1 shadow-lg"
                 >
                   {suggestions.map((s, i) => (
                     <li
@@ -168,11 +169,12 @@ export default function Home() {
                       aria-selected={i === activeIndex}
                       onMouseDown={() => selectSuggestion(s)}
                       onMouseEnter={() => setActiveIndex(i)}
-                      className={`cursor-pointer truncate px-4 py-2 text-sm ${
+                      className={cn(
+                        "cursor-pointer truncate px-4 py-2 text-sm",
                         i === activeIndex
-                          ? "bg-blue-50 text-blue-700"
-                          : "text-gray-700 hover:bg-gray-50"
-                      }`}
+                          ? "bg-accent text-accent-foreground"
+                          : "text-foreground hover:bg-muted"
+                      )}
                     >
                       {s}
                     </li>
@@ -180,17 +182,19 @@ export default function Home() {
                 </ul>
               )}
             </div>
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {status === "loading" ? "分析中…" : "開始分析"}
-            </button>
+            <Button type="submit" disabled={status === "loading"}>
+              {status === "loading" ? (
+                <>
+                  <Loader2 data-icon="inline-start" className="animate-spin" />
+                  分析中…
+                </>
+              ) : (
+                "開始分析"
+              )}
+            </Button>
           </div>
         </form>
 
-        {/* Legend */}
         <div className="mb-6 flex flex-wrap gap-2 justify-center">
           {[
             ["10M+", "bg-emerald-400", "全網主流"],
@@ -200,45 +204,26 @@ export default function Home() {
             ["1K - 10K", "bg-orange-400", "小眾"],
             ["< 1K", "bg-red-400", "非主流"],
           ].map(([bucket, color, desc]) => (
-            <div key={bucket} className="flex items-center gap-1.5 text-xs text-gray-600">
-              <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
+            <div key={bucket} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className={cn("size-2.5 rounded-full", color)} />
               <span className="font-medium">{bucket}</span>
-              <span className="text-gray-400">{desc}</span>
+              <span className="opacity-60">{desc}</span>
             </div>
           ))}
         </div>
 
-        {/* States */}
         {status === "loading" && (
-          <div className="flex items-center justify-center gap-3 py-16 text-gray-500">
-            <svg
-              className="h-5 w-5 animate-spin"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v8H4z"
-              />
-            </svg>
+          <div className="flex items-center justify-center gap-3 py-16 text-muted-foreground">
+            <Loader2 className="size-5 animate-spin" />
             正在爬取並分析…
           </div>
         )}
 
         {status === "error" && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-            <p className="text-sm font-medium text-red-800">分析失敗</p>
-            <p className="mt-1 text-sm text-red-600">{error}</p>
-          </div>
+          <Alert variant="destructive">
+            <AlertTitle>分析失敗</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {status === "success" && data && <AnalysisResult data={data} />}
